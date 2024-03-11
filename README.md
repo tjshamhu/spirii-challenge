@@ -24,9 +24,51 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Done in the [Nest](https://github.com/nestjs/nest) framework.
 
-## Installation
+#### Project structure
+The app has 4 modules
+    - Aggregation module,  (exposes the API resource which can be used to fetch aggregated data)
+    - ExternalData module, (used to fetch data from the Transactions API)
+    - Data module,         (used to write data to the service's own permanent storage)
+    - App module,          (bootstraps the service and sync data from the transactions API)
+It also contains a "commons" directory used to hold commonly used globally available functions & a
+
+#### Endpoint available (after starting the app)
+- http://localhost:3000/aggregation/074092 
+- http://localhost:3000/aggregation/payouts
+May take up to 1 minute before you start seeing any data on these endpoints
+
+#### Process & Architecture
+When the service starts, it begins a CRON that run every minute. 
+This CRON performs the job of fetching data from eternal transaction API and aggregates it.
+Once aggregated, it adds those aggregations to the services own data store (SQLITE).
+Since these aggregations are simple additions, newly found data can simply be added on top existing data.
+This CRON also does some filtering to ensure idempotency. Even when faced with duplicate data, it is able to filter out transaction it has already processed before.
+
+#### Improvements & Assumptions
+The cron runs every minute and is done executing by the next minute.
+Given the service runs in a cluster, there can only one instance of the service fetching from the transaction API, I would have done this by using a shared key
+Once data is synced, it is store in a data source, accessible to all instances of the service
+I would not have used SQLite, I only used it due to the time constraint. I would have likely used an in-memory store such as redis, given the low-latency requirement.
+I might have experimented with a share RDS instance first, as those tend to be extremely low latency
+I would have added role based authentication to all the publicly exposed endpoints
+I would have added filtering and sorting to the API resources
+
+
+#### Testing Strategy
+Given additional time, I would have invested it in adding unit & integrations test at the least, and possibly e2e tests too if time permits
+I'd have added unit tests for all critical functionalities of the logic, testing individual services, and utility functions.
+I'd have tested how the different modules of the application interact with each other. This would also involve testing interactions between the services and the database.
+Give we are exposing publicly available API resources, I'd have also tested the authentication, DoS & other common attacks, perhaps even added a rate limiter.
+
+TDD would be possible, especially when the business goals and requirements are clearly defined. 
+From the overall business goal, we'd have to write down some user stories. 
+We break these down into small digestible tasks, where a success criteria is defined
+Once we have our tasks, we can begin to write test cases that assert the happy path of our feature as well as edge cases we can identify
+
+
+## Instal dependancies before attempting to start the app
 
 ```bash
 $ yarn install
@@ -57,17 +99,3 @@ $ yarn run test:e2e
 # test coverage
 $ yarn run test:cov
 ```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).

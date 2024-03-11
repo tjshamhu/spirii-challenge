@@ -3,6 +3,6 @@ import { ExternalDataService } from './external-data.service';
 
 @Module({
   providers: [ExternalDataService],
-  exports: [ExternalDataService]
+  exports: [ExternalDataService],
 })
 export class ExternalDataModule {}
